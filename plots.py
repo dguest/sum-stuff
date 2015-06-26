@@ -1,33 +1,61 @@
 #!/usr/bin/env python3
-
+"""
+plotting script.
+ - first argument is the file listing inputs,
+ - second argument is the number of files to average
+"""
 import sys, os
 from os.path import basename, splitext
 from matplotlib import pyplot as plt
 import numpy as np
 
+
+
 def run():
     # grab list of files from command line
-    files = sorted(sys.argv[1:])
+    files = []
+    for line in open(sys.argv[1]):
+        stripped_line = line.strip()
+        if not stripped_line:
+            continue
+        files.append(stripped_line)
+    n_ave = int(sys.argv[2])
 
     # get a sorted list of files (using routine defined below)
     datasets = get_datasets(files)
 
     # averaging part
-    n_ave = 2                   # edit this!
     for file_n in range(0, len(datasets) - n_ave + 1):
         # grab a subset
         sets = datasets[file_n:file_n+n_ave]
 
         # sum them, divide by the number
-        file_sum = np.zeros(sets[0].shape)
+        n_entries = sets[0].shape[0]
+        x_vals = sets[0][:,0]
+        y_num, y_denom = np.zeros(n_entries), np.zeros(n_entries)
         for dataset in sets:
-            file_sum += dataset
-        file_sum /= n_ave
+            # get x, y, and z for this dataset
+            x, y, sigma = [x.flatten() for x in np.split(dataset, 3, axis=1)]
+            assert np.all(np.isclose(x, x_vals)), (x, x_vals)
+            # only add the valid points
+            vp = (sigma != 0)
+            vy, vs = y[vp], sigma[vp]
+            y_num[vp] += vy / vs**2
+            y_denom[vp] += 1 / vs**2
+
+        # redefine valid points to be _all_ valid points
+        vp = (y_denom != 0)
+        y_vals = y_num[vp] / y_denom[vp]
+        # print(y_vals, y_num, y_denom)
+        error_bars = 1/(y_denom[vp])**0.5
 
         # plot the scatterplot
-        plt.errorbar(file_sum[:,0], file_sum[:,1], yerr=file_sum[:,2])
+        plt.errorbar(x_vals[vp], y_vals, yerr=error_bars)
+        # plt.scatter(x_vals, y_vals)
         # zoom in
         plt.xlim(0, 100)
+        plt.xlabel('something on x')
+        plt.ylabel('something on y')
 
         # get the file names (use the 'stub' function below)
         name1, name2 = stub(files[file_n]), stub(files[file_n + n_ave - 1])
