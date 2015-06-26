@@ -37,13 +37,17 @@ def run():
             # get x, y, and z for this dataset
             x, y, sigma = [x.flatten() for x in np.split(dataset, 3, axis=1)]
             assert np.all(np.isclose(x, x_vals)), (x, x_vals)
-            # only add the valid points
+
+            # THIS IS WHERE ALL THE LOGIC with averaging points is
+            # only add the valid points: `vp` is an array pointing to them
             vp = (sigma != 0)
+
             vy, vs = y[vp], sigma[vp]
             y_num[vp] += vy / vs**2
             y_denom[vp] += 1 / vs**2
 
-        # redefine valid points to be _all_ valid points
+        # redefine valid points to be all points where something has been
+        # added
         vp = (y_denom != 0)
         y_vals = y_num[vp] / y_denom[vp]
         # print(y_vals, y_num, y_denom)
@@ -51,8 +55,8 @@ def run():
 
         # plot the scatterplot
         plt.errorbar(x_vals[vp], y_vals, yerr=error_bars)
-        # plt.scatter(x_vals, y_vals)
-        # zoom in
+
+        # zoom in, label things
         plt.xlim(0, 100)
         plt.xlabel('something on x')
         plt.ylabel('something on y')
