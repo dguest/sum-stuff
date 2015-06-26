@@ -12,6 +12,6 @@ It should then install some stuff. Pip should also install numpy.
 
 ## How to use
 
-Just run `./plots.py <list of files to plot>`
+Just run `./plots.py <files list> <num to average>`
 
 [py3k]:https://www.python.org/downloads/
